@@ -182,14 +182,30 @@ function! s:MatchToggle()
 endfunction
 nnoremap <silent> <Leader>m :call <SID>MatchToggle()<CR>
 
+" Enable 
+function! s:EnableMultiHL()
+    let g:match_maps = 1
+    for i in range(1, 9)
+      execute 'vnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 1, v:count)<CR>'
+      execute 'nnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 2, v:count)<CR>'
+    endfor
+    vnoremap <silent> \0  :<C-U>call <SID>UndoHighlight(1)<CR>
+    nnoremap <silent> \0  :<C-U>call <SID>UndoHighlight(2)<CR>
+    nnoremap <silent> \-  :call <SID>WindowMatches(0)<CR>
+    nnoremap <silent> \=  :call <SID>WindowMatches(1)<CR>
+    nnoremap <silent> \\  :call <SID>WindowMatches(2)<CR>
+    nnoremap <silent> \f  :call <SID>Search(0)<CR>
+    nnoremap <silent> \F  :call <SID>Search(1)<CR>
+    nnoremap <silent> \n  :let @/=<SID>Search(0)<CR>
+    nnoremap <silent> \N  :let @/=<SID>Search(1)<CR>
+endfunction
+
 " Remove and save current matches, or restore them.
 function! s:WindowMatches(action)
   call LoadHighlights()
   if a:action == 1
     if exists('w:last_matches')
       call setmatches(w:last_matches)
-    else
-      echo "not exist w:last_matches"
     endif
   elseif a:action == 2
     if exists('g:last_matches')
@@ -324,3 +340,6 @@ function! s:Highlight(args) range
   echo 'Error: First argument must be highlight number 1..99'
 endfunction
 command! -nargs=* -range Highlight call s:Highlight('<args>')
+
+
+call <SID>EnableMultiHL()
