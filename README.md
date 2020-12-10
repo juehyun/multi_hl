@@ -5,30 +5,36 @@
 ## Installation (using vim-plug)
 
  - Install vim-plug
+
 	Linux
 	```
-curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
-https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+	curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
+	https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 	```
+
 	Windows ( Powershell )
+	```csh
+	iwr -useb https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim |`
+	   ni $HOME/vimfiles/autoload/plug.vim -Force
 	```
- iwr -useb https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim |`
-    ni $HOME/vimfiles/autoload/plug.vim -Force
-	```
+
 	refer https://github.com/junegunn/vim-plug for more details about vim-plug
+
+
 
  - Add following lines in your .vimrc
 
-  ```
-  call plug#begin('~/.vim/plugged')
-  Plug 'juehyun/multi_hl'
-  call plug#end()
-  ```
+	```
+	call plug#begin('~/.vim/plugged')
+	Plug 'juehyun/multi_hl'
+	call plug#end()
+	```
+
 
  - Open gvim and type following command
-  ```
-  :PlugInstall
-  ```
+	```
+	:PlugInstall
+	```
 
 ## Usage
 
@@ -57,7 +63,6 @@ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 	 | Keypad -         | \-                |
 	 | Keypad *         | \\                |
 	 | \m               | \m (but not needed enabled at startup) |
-	 | ----| ----|
   
   
 
