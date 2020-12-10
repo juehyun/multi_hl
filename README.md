@@ -2,6 +2,10 @@
 
  A vim script (vim plugin) to enable multiple words highlight
 
+ - Screenshot
+
+	![multi_hl](screenshot.png)
+
 ## Installation (using vim-plug)
 
  - Install vim-plug
