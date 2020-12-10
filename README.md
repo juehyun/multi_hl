@@ -62,8 +62,9 @@
 	 | Keypad +         | \\=               |
 	 | Keypad -         | \\-               |
 	 | Keypad *         | \\\               |
-	 | \m               | \m (but not needed enabled at startup) |
-  
+	 | \m               | \m                |
+
+	 Actually the '\m' key mapping is not needed because the script and hot-key mappings are enabled at startup
   
 
  - Color
