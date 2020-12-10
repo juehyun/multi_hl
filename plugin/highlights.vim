@@ -188,6 +188,8 @@ function! s:WindowMatches(action)
   if a:action == 1
     if exists('w:last_matches')
       call setmatches(w:last_matches)
+    else
+      echo "not exist w:last_matches"
     endif
   elseif a:action == 2
     if exists('g:last_matches')
