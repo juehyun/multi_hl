@@ -59,9 +59,9 @@
 	 | Keypad 7         | \7                |
 	 | Keypad 8         | \8                |
 	 | Keypad 9         | \9                |
-	 | Keypad +         | \=                |
-	 | Keypad -         | \-                |
-	 | Keypad *         | \\                |
+	 | Keypad +         | \\=               |
+	 | Keypad -         | \\-               |
+	 | Keypad *         | \\\               |
 	 | \m               | \m (but not needed enabled at startup) |
   
   
