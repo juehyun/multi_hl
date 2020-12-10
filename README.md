@@ -51,22 +51,22 @@
 
  - Hot-keys
 
-	 | original hot-key | changed hot-key   |
-	 | ---------------- | ------------------|
-	 | Keypad 0         | \0                |
-	 | Keypad 1         | \1                |
-	 | Keypad 2         | \2                |
-	 | Keypad 3         | \3                |
-	 | Keypad 4         | \4                |
-	 | Keypad 5         | \5                |
-	 | Keypad 6         | \6                |
-	 | Keypad 7         | \7                |
-	 | Keypad 8         | \8                |
-	 | Keypad 9         | \9                |
-	 | Keypad +         | \\=               |
-	 | Keypad -         | \\-               |
-	 | Keypad *         | \\\               |
-	 | \m               | \m                |
+   | original hot-key | changed hot-key    | description                                                                                                       |
+   | ---------------- | ------------------ | ----------------------------------                                                                                |
+   | Keypad 0         | \0                 | search pattern(word under cursor or visual selected region) and clear the highlight, i.e. clear current highlight |
+   | Keypad 1         | \1                 | search pattern(word under cursor or visual selected region) and set highlight using '1' color (of highlight.csv)  |
+   | Keypad 2         | \2                 | ...                                                                                                               |
+   | Keypad 3         | \3                 | ...                                                                                                               |
+   | Keypad 4         | \4                 | ...                                                                                                               |
+   | Keypad 5         | \5                 | ...                                                                                                               |
+   | Keypad 6         | \6                 | ...                                                                                                               |
+   | Keypad 7         | \7                 | ...                                                                                                               |
+   | Keypad 8         | \8                 | ...                                                                                                               |
+   | Keypad 9         | \9                 | ...                                                                                                               |
+   | Keypad +         | \\=                | retrieve previous highlights                                                                                      |
+   | Keypad -         | \\-                | save current highlights and clear all highlights                                                                  |
+   | Keypad *         | \\\                | ...                                                                                                               |
+   | \m               | \m                 | toggle enable/disable script                                                                                      |
 
 	 Actually the '\m' key mapping is not needed because the script and hot-key mappings are enabled at startup
   
