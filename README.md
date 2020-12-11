@@ -91,4 +91,6 @@ refer https://github.com/junegunn/vim-plug for more details about vim-plug
 
  - Check screenshot for color example
 
+   - or type the gvim command ':Hsample<CR>'
+
  - See 'plugin\highlights.csv' file to change color configuration
