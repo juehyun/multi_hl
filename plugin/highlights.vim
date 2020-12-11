@@ -73,38 +73,6 @@ function! s:Pattern(what)
 	return result
 endfunction
 
-let s:circular_hlnum = 0
-function! s:DoHighlightCircular(pat)
-	if(s:circular_hlnum==0 ||s:circular_hlnum==10 || s:circular_hlnum==20)
-		let s:circular_hlnum += 1
-	endif
-	"circular_hlnum = {1..9, 11..19, 21..29}
-	
-	if(0< s:circular_hlnum && s:circular_hlnum <= 9)
-		let l:decade = 0
-		let l:hlnum = s:circular_hlnum
-	else
-		if(10< s:circular_hlnum && s:circular_hlnum <= 19)
-			let l:decade = 1
-			let l:hlnum = s:circular_hlnum -10
-		else
-			if(20< s:circular_hlnum && s:circular_hlnum <= 29)
-				let l:decade = 2
-				let l:hlnum = s:circular_hlnum -20
-			endif
-		endif
-	endif
-	"l:decade = {0,1,2}
-	"l:hlnum  = {1...9}
-	call s:DoHighlight(l:hlnum, a:pat, l:decade)
-	
-	if(s:circular_hlnum==29)
-		let s:circular_hlnum = 0
-	else
-		let s:circular_hlnum += 1
-	endif
-endfunction
-
 " Remove any highlighting for hlnum then highlight pattern (if not empty).
 " If pat is numeric, use current word or visual selection and
 " increase hlnum by count*10 (if count [1..9] is given).
@@ -161,71 +129,6 @@ function! s:Search(backward)
 	return pat
 endfunction
 
-" Enable or disable mappings and any current matches.
-function! s:MatchToggle()
-	if exists('g:match_maps') && g:match_maps
-		let g:match_maps = 0
-		call s:DisableMultiHL();
-	else
-		let g:match_maps = 1
-		call s:EnableMultiHL();
-	endif
-	call s:WindowMatches(g:match_maps)
-	echo 'Mappings for matching:' g:match_maps ? 'ON' : 'off'
-endfunction
-nnoremap <silent> <Leader>m :call <SID>MatchToggle()<CR>
-
-" Disable
-function! s:DisableMultiHL()
-	for i in range(0, 9)
-		"execute 'unmap <k'.i.'>'
-		execute 'unmap \'.i.''
-	endfor
-	"nunmap <kMinus>
-	"nunmap <kPlus>
-	"nunmap <kMultiply>
-	"nunmap <Leader>f
-	"nunmap <Leader>F
-	"nunmap <Leader>n
-	"nunmap <Leader>N
-	nunmap \-
-	nunmap \=
-	nunmap \\
-	nunmap \f
-	nunmap \F
-	nunmap \n
-	nunmap \N
-endfunction
-
-" Enable 
-function! s:EnableMultiHL()
-	for i in range(1, 9)
-		"execute 'vnoremap <silent> <k'.i.'> :<C-U>call <SID>DoHighlight('.i.', 1, v:count)<CR>'
-		"execute 'nnoremap <silent> <k'.i.'> :<C-U>call <SID>DoHighlight('.i.', 2, v:count)<CR>'
-		execute 'vnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 1, v:count)<CR>'
-		execute 'nnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 2, v:count)<CR>'
-		execute 'vnoremap <silent> \\     :call <SID>DoHighlightCircular(1)<CR>'
-		execute 'nnoremap <silent> \\     :call <SID>DoHighlightCircular(2)<CR>'
-	endfor
-	"vnoremap <silent> <k0> :<C-U>call <SID>UndoHighlight(1)<CR>
-	"nnoremap <silent> <k0> :<C-U>call <SID>UndoHighlight(2)<CR>
-	"nnoremap <silent> <kMinus> :call <SID>WindowMatches(0)<CR>
-	"nnoremap <silent> <kPlus> :call <SID>WindowMatches(1)<CR>
-	"nnoremap <silent> <kMultiply> :call <SID>WindowMatches(2)<CR>
-	"nnoremap <silent> <Leader>f :call <SID>Search(0)<CR>
-	"nnoremap <silent> <Leader>F :call <SID>Search(1)<CR>
-	"nnoremap <silent> <Leader>n :let @/=<SID>Search(0)<CR>
-	"nnoremap <silent> <Leader>N :let @/=<SID>Search(1)<CR>
-
-	vnoremap <silent> \0  :<C-U>call <SID>UndoHighlight(1)<CR>
-	nnoremap <silent> \0  :<C-U>call <SID>UndoHighlight(2)<CR>
-	nnoremap <silent> \-  :call <SID>WindowMatches(0)<CR>
-	nnoremap <silent> \=  :call <SID>WindowMatches(1)<CR>
-	nnoremap <silent> \f  :call <SID>Search(0)<CR>
-	nnoremap <silent> \F  :call <SID>Search(1)<CR>
-	nnoremap <silent> \n  :let @/=<SID>Search(0)<CR>
-	nnoremap <silent> \N  :let @/=<SID>Search(1)<CR>
-endfunction
 
 " Remove and save current matches, or restore them.
 function! s:WindowMatches(action)
@@ -369,5 +272,128 @@ function! s:Highlight(args) range
 endfunction
 command! -nargs=* -range Highlight call s:Highlight('<args>')
 
+
+"*********************************************************************
+" COPYRIGHT (C) 2017 Joohyun Lee (juehyun@etri.re.kr)
+" 
+" MIT License
+" 
+" Permission is hereby granted, free of charge, to any person obtaining
+" a copy of this software and associated documentation files (the
+" "Software"), to deal in the Software without restriction, including
+" without limitation the rights to use, copy, modify, merge, publish,
+" distribute, sublicense, and/or sell copies of the Software, and to
+" permit persons to whom the Software is furnished to do so, subject to
+" the following conditions:
+" 
+" The above copyright notice and this permission notice shall be
+" included in all copies or substantial portions of the Software.
+" 
+" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+" EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+" NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+" LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+" OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+" WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"*********************************************************************
+
+" Enable or disable mappings and any current matches.
+function! s:MatchToggle()
+	if exists('g:match_maps') && g:match_maps
+		let g:match_maps = 0
+		call s:DisableMultiHL();
+	else
+		let g:match_maps = 1
+		call s:EnableMultiHL();
+	endif
+	call s:WindowMatches(g:match_maps)
+	echo 'Mappings for matching:' g:match_maps ? 'ON' : 'off'
+endfunction
+nnoremap <silent> <Leader>m :call <SID>MatchToggle()<CR>
+
+" Disable
+function! s:DisableMultiHL()
+	for i in range(0, 9)
+		"execute 'unmap <k'.i.'>'
+		execute 'unmap \'.i.''
+	endfor
+	"nunmap <kMinus>
+	"nunmap <kPlus>
+	"nunmap <kMultiply>
+	"nunmap <Leader>f
+	"nunmap <Leader>F
+	"nunmap <Leader>n
+	"nunmap <Leader>N
+	nunmap \-
+	nunmap \=
+	nunmap \\
+	nunmap \f
+	nunmap \F
+	nunmap \n
+	nunmap \N
+endfunction
+
+" Enable 
+function! s:EnableMultiHL()
+	for i in range(1, 9)
+		"execute 'vnoremap <silent> <k'.i.'> :<C-U>call <SID>DoHighlight('.i.', 1, v:count)<CR>'
+		"execute 'nnoremap <silent> <k'.i.'> :<C-U>call <SID>DoHighlight('.i.', 2, v:count)<CR>'
+		execute 'vnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 1, v:count)<CR>'
+		execute 'nnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 2, v:count)<CR>'
+		execute 'vnoremap <silent> \\     :call <SID>DoHighlightCircular(1)<CR>'
+		execute 'nnoremap <silent> \\     :call <SID>DoHighlightCircular(2)<CR>'
+	endfor
+	"vnoremap <silent> <k0> :<C-U>call <SID>UndoHighlight(1)<CR>
+	"nnoremap <silent> <k0> :<C-U>call <SID>UndoHighlight(2)<CR>
+	"nnoremap <silent> <kMinus> :call <SID>WindowMatches(0)<CR>
+	"nnoremap <silent> <kPlus> :call <SID>WindowMatches(1)<CR>
+	"nnoremap <silent> <kMultiply> :call <SID>WindowMatches(2)<CR>
+	"nnoremap <silent> <Leader>f :call <SID>Search(0)<CR>
+	"nnoremap <silent> <Leader>F :call <SID>Search(1)<CR>
+	"nnoremap <silent> <Leader>n :let @/=<SID>Search(0)<CR>
+	"nnoremap <silent> <Leader>N :let @/=<SID>Search(1)<CR>
+
+	vnoremap <silent> \0  :<C-U>call <SID>UndoHighlight(1)<CR>
+	nnoremap <silent> \0  :<C-U>call <SID>UndoHighlight(2)<CR>
+	nnoremap <silent> \-  :call <SID>WindowMatches(0)<CR>
+	nnoremap <silent> \=  :call <SID>WindowMatches(1)<CR>
+	nnoremap <silent> \f  :call <SID>Search(0)<CR>
+	nnoremap <silent> \F  :call <SID>Search(1)<CR>
+	nnoremap <silent> \n  :let @/=<SID>Search(0)<CR>
+	nnoremap <silent> \N  :let @/=<SID>Search(1)<CR>
+endfunction
+
+let s:circular_hlnum = 0
+function! s:DoHighlightCircular(pat)
+	if(s:circular_hlnum==0 ||s:circular_hlnum==10 || s:circular_hlnum==20)
+		let s:circular_hlnum += 1
+	endif
+	"circular_hlnum = {1..9, 11..19, 21..29}
+	
+	if(0< s:circular_hlnum && s:circular_hlnum <= 9)
+		let l:decade = 0
+		let l:hlnum = s:circular_hlnum
+	else
+		if(10< s:circular_hlnum && s:circular_hlnum <= 19)
+			let l:decade = 1
+			let l:hlnum = s:circular_hlnum -10
+		else
+			if(20< s:circular_hlnum && s:circular_hlnum <= 29)
+				let l:decade = 2
+				let l:hlnum = s:circular_hlnum -20
+			endif
+		endif
+	endif
+	"l:decade = {0,1,2}
+	"l:hlnum  = {1...9}
+	call s:DoHighlight(l:hlnum, a:pat, l:decade)
+	
+	if(s:circular_hlnum==29)
+		let s:circular_hlnum = 0
+	else
+		let s:circular_hlnum += 1
+	endif
+endfunction
 
 call <SID>EnableMultiHL()
