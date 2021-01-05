@@ -90,10 +90,18 @@ function! s:DoHighlight(hlnum, pat, decade)
 		let pattern = a:pat
 	endif
 	let id = hltotal + 100
-	silent! call matchdelete(id)
+	"silent! call matchdelete(id)
+	"highlight all windows and tabs, and get back to original
+	let l:wid = win_getid()
+	silent! :tabdo windo call matchdelete(id)
+	call win_gotoid(l:wid)
 	if !empty(pattern)
 		try
-			call matchadd('hl'.hltotal, pattern, -1, id)
+			"call matchadd('hl'.hltotal, pattern, -1, id)
+			"highlight all windows and tabs, and get back to original
+			let l:wid = win_getid()
+			:tabdo windo call matchadd('hl'.hltotal, pattern, -1, id)
+			call win_gotoid(l:wid)
 		catch /E28:/
 			echo 'Highlight hl'.hltotal.' is not defined'
 		endtry
@@ -109,7 +117,11 @@ function! s:UndoHighlight(pat)
 	endif
 	for m in getmatches()
 		if m.pattern ==# pattern
-			call matchdelete(m.id)
+			"call matchdelete(m.id)
+			"highlight all windows and tabs, and get back to original
+			let l:wid = win_getid()
+			:tabdo windo call matchdelete(m.id)
+			call win_gotoid(l:wid)
 		endif
 	endfor
 endfunction
@@ -341,9 +353,8 @@ function! s:EnableMultiHL()
 		"execute 'nnoremap <silent> <k'.i.'> :<C-U>call <SID>DoHighlight('.i.', 2, v:count)<CR>'
 		execute 'vnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 1, v:count)<CR>'
 		execute 'nnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 2, v:count)<CR>'
-		execute 'vnoremap <silent> \\     :call <SID>DoHighlightCircular(1)<CR>'
-		execute 'nnoremap <silent> \\     :call <SID>DoHighlightCircular(2)<CR>'
 	endfor
+	
 	"vnoremap <silent> <k0> :<C-U>call <SID>UndoHighlight(1)<CR>
 	"nnoremap <silent> <k0> :<C-U>call <SID>UndoHighlight(2)<CR>
 	"nnoremap <silent> <kMinus> :call <SID>WindowMatches(0)<CR>
@@ -362,6 +373,8 @@ function! s:EnableMultiHL()
 	nnoremap <silent> \F  :call <SID>Search(1)<CR>
 	nnoremap <silent> \n  :let @/=<SID>Search(0)<CR>
 	nnoremap <silent> \N  :let @/=<SID>Search(1)<CR>
+	vnoremap <silent> \\  :call <SID>DoHighlightCircular(1)<CR>
+	nnoremap <silent> \\  :call <SID>DoHighlightCircular(2)<CR>
 endfunction
 
 let s:circular_hlnum = 0
@@ -370,7 +383,6 @@ function! s:DoHighlightCircular(pat)
 		let s:circular_hlnum += 1
 	endif
 	"circular_hlnum = {1..9, 11..19, 21..29}
-	
 	if(0< s:circular_hlnum && s:circular_hlnum <= 9)
 		let l:decade = 0
 		let l:hlnum = s:circular_hlnum
@@ -385,15 +397,15 @@ function! s:DoHighlightCircular(pat)
 			endif
 		endif
 	endif
-	"l:decade = {0,1,2}
-	"l:hlnum  = {1...9}
-	call s:DoHighlight(l:hlnum, a:pat, l:decade)
-	
 	if(s:circular_hlnum==29)
 		let s:circular_hlnum = 0
 	else
 		let s:circular_hlnum += 1
 	endif
+	
+	"l:decade = {0,1,2}
+	"l:hlnum  = {1...9}
+	call s:DoHighlight(l:hlnum, a:pat, l:decade)
 endfunction
 
 call <SID>EnableMultiHL()
