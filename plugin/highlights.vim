@@ -1,3 +1,29 @@
+"*********************************************************************
+" COPYRIGHT (C) 2017 Joohyun Lee (juehyun@etri.re.kr)
+" 
+" MIT License
+" 
+" Permission is hereby granted, free of charge, to any person obtaining
+" a copy of this software and associated documentation files (the
+" "Software"), to deal in the Software without restriction, including
+" without limitation the rights to use, copy, modify, merge, publish,
+" distribute, sublicense, and/or sell copies of the Software, and to
+" permit persons to whom the Software is furnished to do so, subject to
+" the following conditions:
+" 
+" The above copyright notice and this permission notice shall be
+" included in all copies or substantial portions of the Software.
+" 
+" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+" EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+" NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+" LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+" OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+" WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"*********************************************************************
+
+
 " Plugin to highlight multiple words in different colors.
 " Version 2008-11-19 from http://vim.wikia.com/wiki/VimTip1572
 " File highlights.csv (in same directory as script) defines the highlights.
@@ -27,6 +53,14 @@ if v:version < 702 || exists('loaded_highlightmultiple') || &cp
 endif
 
 let loaded_highlightmultiple = 1
+let s:circular_hlnum = 0
+
+"highlight all windows and tabs, and get back to original
+"tabdo command is too slow, therefore, use following trick 
+"  DoHighlight(), matching executed using ':windo' command
+"  update g:last_matches whenever DoHighlight()
+"  get g:last_matches and setmatches(g:last_matches), when 'WinNew', 'TabEnter' event
+let s:hl_all_windows_tabs = 1
 
 " On first call, read file highlights.csv in same directory as script.
 " For example, line "5,white,blue,black,green" executes:
@@ -90,26 +124,44 @@ function! s:DoHighlight(hlnum, pat, decade)
 		let pattern = a:pat
 	endif
 	let id = hltotal + 100
-	"silent! call matchdelete(id)
-	"highlight all windows and tabs, and get back to original
-	let l:wid = win_getid()
-	silent! :tabdo windo call matchdelete(id)
-	call win_gotoid(l:wid)
+	
+	if s:hl_all_windows_tabs
+		let l:wid = win_getid()
+		"silent! :tabdo windo call matchdelete(id)
+		silent! windo call matchdelete(id)
+		call win_gotoid(l:wid)
+		echo "call matchdelete(id)"
+	else
+		silent! call matchdelete(id)
+	endif
+	
 	if !empty(pattern)
 		try
-			"call matchadd('hl'.hltotal, pattern, -1, id)
-			"highlight all windows and tabs, and get back to original
-			let l:wid = win_getid()
-			:tabdo windo call matchadd('hl'.hltotal, pattern, -1, id)
-			call win_gotoid(l:wid)
+			if s:hl_all_windows_tabs
+				let l:wid = win_getid()
+				":tabdo windo call matchadd('hl'.hltotal, pattern, -1, id)
+				windo call matchadd('hl'.hltotal, pattern, -1, id)
+				call win_gotoid(l:wid)
+				echo "call matchadd(...)"
+			else 
+				call matchadd('hl'.hltotal, pattern, -1, id)
+			endif
 		catch /E28:/
 			echo 'Highlight hl'.hltotal.' is not defined'
 		endtry
 	endif
+
+	"update matches to global variable, to load when another tab open
+	if s:hl_all_windows_tabs
+		let g:last_matches = getmatches()
+		echo "update g:last_matches"
+	endif
+
 endfunction
 
-" Remove all matches for pattern.
-function! s:UndoHighlight(pat)
+
+" Remove all matches for a pattern.
+function! s:ClsEachHighlight(pat)
 	if type(a:pat) == type(0)
 		let pattern = s:Pattern(a:pat)
 	else
@@ -117,11 +169,14 @@ function! s:UndoHighlight(pat)
 	endif
 	for m in getmatches()
 		if m.pattern ==# pattern
-			"call matchdelete(m.id)
-			"highlight all windows and tabs, and get back to original
-			let l:wid = win_getid()
-			:tabdo windo call matchdelete(m.id)
-			call win_gotoid(l:wid)
+			if s:hl_all_windows_tabs
+				let l:wid = win_getid()
+				":tabdo windo call matchdelete(m.id)
+				windo call matchdelete(m.id)
+				call win_gotoid(l:wid)
+			else
+				call matchdelete(m.id)
+			endif
 		endif
 	endfor
 endfunction
@@ -143,29 +198,53 @@ endfunction
 
 
 " Remove and save current matches, or restore them.
-function! s:WindowMatches(action)
+function! s:StoreClsLoadHighlight(action)
 	call LoadHighlights()
 	if a:action == 1
-		if exists('w:last_matches')
-			call setmatches(w:last_matches)
+		if s:hl_all_windows_tabs
+			if exists('g:last_matches')
+				let l:wid = win_getid()
+				":tabdo windo call setmatches(g:last_matches)
+				windo call setmatches(g:last_matches)
+				call win_gotoid(l:wid)
+			endif
+		else
+			if exists('w:last_matches')
+				call setmatches(w:last_matches)
+			endif
 		endif
 	elseif a:action == 2
 		if exists('g:last_matches')
-			call setmatches(g:last_matches)
+			if s:hl_all_windows_tabs
+				let l:wid = win_getid()
+				":tabdo windo call setmatches(g:last_matches)
+				windo call setmatches(g:last_matches)
+				call win_gotoid(l:wid)
+			else
+				call setmatches(g:last_matches)
+			endif
 		else
 			call s:Hrestore('')
 		endif
 	else
 		let m = getmatches()
 		if !empty(m)
-			let w:last_matches = m
 			let g:last_matches = m
 			call s:Hsave('')
-			call clearmatches()
-			let s:circular_hlnum = 0
+			if s:hl_all_windows_tabs
+				let l:wid = win_getid()
+				":tabdo windo let w:last_matches = m | call clearmatches()
+				windo let w:last_matches = m | call clearmatches()
+				call win_gotoid(l:wid)
+			else
+				let w:last_matches = m
+				call clearmatches()
+			endif
+			"let s:circular_hlnum = 0
 		endif
 	endif
 endfunction
+
 
 " Return name of global variable to save value ('' if invalid).
 function! s:NameForSave(name)
@@ -222,13 +301,13 @@ command! -nargs=? -complete=custom,s:SavedNames Hrestore call s:Hrestore('<args>
 "   'pattern' = all matches for pattern
 function! s:Hclear(pattern) range
 	if empty(a:pattern)
-		call s:UndoHighlight(0)
+		call s:ClsEachHighlight(0)
 	elseif a:pattern == '*'
-		call s:WindowMatches(0)
+		call s:StoreClsLoadHighlight(0)
 	elseif a:pattern =~ '^[1-9][0-9]\?$'
 		call s:DoHighlight(str2nr(a:pattern), '', 0)
 	else
-		call s:UndoHighlight(a:pattern)
+		call s:ClsEachHighlight(a:pattern)
 	endif
 endfunction
 command! -nargs=* -complete=custom,s:MatchPatterns -range Hclear call s:Hclear('<args>')
@@ -285,41 +364,16 @@ endfunction
 command! -nargs=* -range Highlight call s:Highlight('<args>')
 
 
-"*********************************************************************
-" COPYRIGHT (C) 2017 Joohyun Lee (juehyun@etri.re.kr)
-" 
-" MIT License
-" 
-" Permission is hereby granted, free of charge, to any person obtaining
-" a copy of this software and associated documentation files (the
-" "Software"), to deal in the Software without restriction, including
-" without limitation the rights to use, copy, modify, merge, publish,
-" distribute, sublicense, and/or sell copies of the Software, and to
-" permit persons to whom the Software is furnished to do so, subject to
-" the following conditions:
-" 
-" The above copyright notice and this permission notice shall be
-" included in all copies or substantial portions of the Software.
-" 
-" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-" EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-" NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-" LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-" OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-" WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-"*********************************************************************
-
 " Enable or disable mappings and any current matches.
 function! s:MatchToggle()
 	if exists('g:match_maps') && g:match_maps
 		let g:match_maps = 0
-		call s:DisableMultiHL();
+		call s:DisableMultiHL()
 	else
 		let g:match_maps = 1
-		call s:EnableMultiHL();
+		call s:EnableMultiHL()
 	endif
-	call s:WindowMatches(g:match_maps)
+	call s:StoreClsLoadHighlight(g:match_maps)
 	echo 'Mappings for matching:' g:match_maps ? 'ON' : 'off'
 endfunction
 nnoremap <silent> <Leader>m :call <SID>MatchToggle()<CR>
@@ -349,35 +403,24 @@ endfunction
 " Enable 
 function! s:EnableMultiHL()
 	for i in range(1, 9)
-		"execute 'vnoremap <silent> <k'.i.'> :<C-U>call <SID>DoHighlight('.i.', 1, v:count)<CR>'
-		"execute 'nnoremap <silent> <k'.i.'> :<C-U>call <SID>DoHighlight('.i.', 2, v:count)<CR>'
 		execute 'vnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 1, v:count)<CR>'
 		execute 'nnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 2, v:count)<CR>'
 	endfor
-	
-	"vnoremap <silent> <k0> :<C-U>call <SID>UndoHighlight(1)<CR>
-	"nnoremap <silent> <k0> :<C-U>call <SID>UndoHighlight(2)<CR>
-	"nnoremap <silent> <kMinus> :call <SID>WindowMatches(0)<CR>
-	"nnoremap <silent> <kPlus> :call <SID>WindowMatches(1)<CR>
-	"nnoremap <silent> <kMultiply> :call <SID>WindowMatches(2)<CR>
-	"nnoremap <silent> <Leader>f :call <SID>Search(0)<CR>
-	"nnoremap <silent> <Leader>F :call <SID>Search(1)<CR>
-	"nnoremap <silent> <Leader>n :let @/=<SID>Search(0)<CR>
-	"nnoremap <silent> <Leader>N :let @/=<SID>Search(1)<CR>
 
-	vnoremap <silent> \0  :<C-U>call <SID>UndoHighlight(1)<CR>
-	nnoremap <silent> \0  :<C-U>call <SID>UndoHighlight(2)<CR>
-	nnoremap <silent> \-  :call <SID>WindowMatches(0)<CR>
-	nnoremap <silent> \=  :call <SID>WindowMatches(1)<CR>
+	vnoremap <silent> \0  :call <SID>ClsEachHighlight(1)<CR>
+	nnoremap <silent> \0  :call <SID>ClsEachHighlight(2)<CR>
+	nnoremap <silent> \-  :call <SID>StoreClsLoadHighlight(0)<CR>
+	nnoremap <silent> \=  :call <SID>StoreClsLoadHighlight(1)<CR>
 	nnoremap <silent> \f  :call <SID>Search(0)<CR>
 	nnoremap <silent> \F  :call <SID>Search(1)<CR>
 	nnoremap <silent> \n  :let @/=<SID>Search(0)<CR>
 	nnoremap <silent> \N  :let @/=<SID>Search(1)<CR>
 	vnoremap <silent> \\  :call <SID>DoHighlightCircular(1)<CR>
 	nnoremap <silent> \\  :call <SID>DoHighlightCircular(2)<CR>
+	vnoremap <silent> &   :call <SID>DoHighlightCircular(1)<CR>
+	nnoremap <silent> &   :call <SID>DoHighlightCircular(2)<CR>
 endfunction
 
-let s:circular_hlnum = 0
 function! s:DoHighlightCircular(pat)
 	if(s:circular_hlnum==0 ||s:circular_hlnum==10 || s:circular_hlnum==20)
 		let s:circular_hlnum += 1
@@ -407,5 +450,21 @@ function! s:DoHighlightCircular(pat)
 	"l:hlnum  = {1...9}
 	call s:DoHighlight(l:hlnum, a:pat, l:decade)
 endfunction
+
+function! s:UpdateHighlight()
+	if s:hl_all_windows_tabs
+		call LoadHighlights()
+		if exists('g:last_matches')
+			let l:wid = win_getid()
+			windo call setmatches(g:last_matches)
+			call win_gotoid(l:wid)
+		endif
+	endif
+	echo "UpdateHighlight()"
+endfunction
+
+"do not use 'BufEnter' event
+"'BufEnter' event was occurred recursely by :windo command
+autocmd! TabEnter,WinNew * call <SID>UpdateHighlight()
 
 call <SID>EnableMultiHL()
