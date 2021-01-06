@@ -56,10 +56,10 @@ let loaded_highlightmultiple = 1
 let s:circular_hlnum = 0
 
 "highlight all windows and tabs, and get back to original
-"tabdo command is too slow, therefore, use following trick 
+"tabdo windo ... command is too slow, therefore, use following trick 
 "  DoHighlight(), matching executed using ':windo' command
-"  update g:last_matches whenever DoHighlight()
-"  get g:last_matches and setmatches(g:last_matches), when 'WinNew', 'TabEnter' event
+"  update g:cur_matches whenever DoHighlight()
+"  get g:cur_matches and setmatches(g:cur_matches), when 'WinNew', 'TabEnter' event
 let s:hl_all_windows_tabs = 1
 
 " On first call, read file highlights.csv in same directory as script.
@@ -107,16 +107,12 @@ function! s:Pattern(what)
 	return result
 endfunction
 
-" Remove any highlighting for hlnum then highlight pattern (if not empty).
-" If pat is numeric, use current word or visual selection and
-" increase hlnum by count*10 (if count [1..9] is given).
-" the purpose of v:count(decade) is to extend color choices :)
-function! s:DoHighlight(hlnum, pat, decade)
+" At first, remove highlighting for hlnum then highlight pattern (if not empty).
+" If pat is numeric, use current word or visual selection (i.e. s:Pattern(a.pat) )
+" otherwise, pat is treated as pattern string
+function! s:DoHighlight(hlnum, pat)
 	call LoadHighlights()
 	let hltotal = a:hlnum
-	if 0 < a:decade && a:decade < 10
-		let hltotal += a:decade * 10
-	endif
 	"check a:pat is v:number type
 	if type(a:pat) == type(0)
 		let pattern = s:Pattern(a:pat)
@@ -126,9 +122,9 @@ function! s:DoHighlight(hlnum, pat, decade)
 	let id = hltotal + 100
 	if s:hl_all_windows_tabs
 		let l:wid = win_getid()
-		"silent! :tabdo windo call matchdelete(id)
 		silent! windo call matchdelete(id)
 		call win_gotoid(l:wid)
+		let g:cur_matches = getmatches()
 	else
 		silent! call matchdelete(id)
 	endif
@@ -136,9 +132,9 @@ function! s:DoHighlight(hlnum, pat, decade)
 		try
 			if s:hl_all_windows_tabs
 				let l:wid = win_getid()
-				":tabdo windo call matchadd('hl'.hltotal, pattern, -1, id)
 				windo call matchadd('hl'.hltotal, pattern, -1, id)
 				call win_gotoid(l:wid)
+				let g:cur_matches = getmatches()
 			else 
 				call matchadd('hl'.hltotal, pattern, -1, id)
 			endif
@@ -146,12 +142,11 @@ function! s:DoHighlight(hlnum, pat, decade)
 			echo 'Highlight hl'.hltotal.' is not defined'
 		endtry
 	endif
-	call s:UpdateHighlight()
 endfunction
 
 
 " Remove all matches for a pattern.
-function! s:ClsEachHighlight(pat)
+function! s:ClearOneHighlight(pat)
 	if type(a:pat) == type(0)
 		let pattern = s:Pattern(a:pat)
 	else
@@ -161,16 +156,16 @@ function! s:ClsEachHighlight(pat)
 		if m.pattern ==# pattern
 			if s:hl_all_windows_tabs
 				let l:wid = win_getid()
-				":tabdo windo call matchdelete(m.id)
 				windo call matchdelete(m.id)
 				call win_gotoid(l:wid)
+				let g:cur_matches = getmatches()
 			else
 				call matchdelete(m.id)
 			endif
 		endif
 	endfor
-	call s:UpdateHighlight()
 endfunction
+
 
 " Return pattern to search for next match, and do search.
 function! s:Search(backward)
@@ -188,53 +183,16 @@ function! s:Search(backward)
 endfunction
 
 
-" Remove and save current matches, or restore them.
-function! s:StoreClsLoadHighlight(action)
-	call LoadHighlights()
-	if a:action == 1
-		if s:hl_all_windows_tabs
-			if exists('g:last_matches')
-				let l:wid = win_getid()
-				":tabdo windo call setmatches(g:last_matches)
-				windo call setmatches(g:last_matches)
-				call win_gotoid(l:wid)
-			endif
-		else
-			if exists('w:last_matches')
-				call setmatches(w:last_matches)
-			endif
-		endif
-	elseif a:action == 2
-		if exists('g:last_matches')
-			if s:hl_all_windows_tabs
-				let l:wid = win_getid()
-				":tabdo windo call setmatches(g:last_matches)
-				windo call setmatches(g:last_matches)
-				call win_gotoid(l:wid)
-			else
-				call setmatches(g:last_matches)
-			endif
-		else
-			call s:Hrestore('')
-		endif
+" Clear Highlights
+function! s:ClearAllHighlight()
+	if s:hl_all_windows_tabs
+		let l:wid = win_getid()
+		windo call clearmatches()
+		call win_gotoid(l:wid)
+		let g:cur_matches = getmatches()
 	else
-		let m = getmatches()
-		if !empty(m)
-			let g:last_matches = m
-			call s:Hsave('')
-			if s:hl_all_windows_tabs
-				let l:wid = win_getid()
-				":tabdo windo let w:last_matches = m | call clearmatches()
-				windo let w:last_matches = m | call clearmatches()
-				call win_gotoid(l:wid)
-			else
-				let w:last_matches = m
-				call clearmatches()
-			endif
-			"let s:circular_hlnum = 0
-		endif
+		call clearmatches()
 	endif
-	call s:UpdateHighlight()
 endfunction
 
 
@@ -259,6 +217,7 @@ function! s:SavedNames(A, L, P)
 endfunction
 
 " Save current highlighting in a global variable.
+" e.g.  call s:Hsave('')
 function! s:Hsave(name)
 	let sname = s:NameForSave(a:name)
 	if !empty(sname)
@@ -270,6 +229,7 @@ endfunction
 command! -nargs=? -complete=custom,s:SavedNames Hsave call s:Hsave('<args>')
 
 " Restore current highlighting from a global variable.
+" e.g. call s:Hrestore('')
 function! s:Hrestore(name)
 	call LoadHighlights()
 	let sname = s:NameForSave(a:name)
@@ -293,13 +253,13 @@ command! -nargs=? -complete=custom,s:SavedNames Hrestore call s:Hrestore('<args>
 "   'pattern' = all matches for pattern
 function! s:Hclear(pattern) range
 	if empty(a:pattern)
-		call s:ClsEachHighlight(0)
+		call s:ClearOneHighlight(0)
 	elseif a:pattern == '*'
-		call s:StoreClsLoadHighlight(0)
+		call s:ClearAllHighlight()
 	elseif a:pattern =~ '^[1-9][0-9]\?$'
-		call s:DoHighlight(str2nr(a:pattern), '', 0)
+		call s:DoHighlight(str2nr(a:pattern), '')
 	else
-		call s:ClsEachHighlight(a:pattern)
+		call s:ClearOneHighlight(a:pattern)
 	endif
 endfunction
 command! -nargs=* -complete=custom,s:MatchPatterns -range Hclear call s:Hclear('<args>')
@@ -314,7 +274,7 @@ function! s:Hsample()
 	for hl in filter(range(1, 99), 'v:val % 10 > 0')
 		if hlexists('hl'.hl)
 			let sample = printf('Sample%2d', hl)
-			call s:DoHighlight(hl, sample, 0)
+			call s:DoHighlight(hl, sample)
 		else
 			let sample = '        '
 		endif
@@ -348,7 +308,7 @@ function! s:Highlight(args) range
 		if empty(pattern)
 			let pattern = s:Pattern(0)
 		endif
-		call s:DoHighlight(hlnum, pattern, 0)
+		call s:DoHighlight(hlnum, pattern)
 		return
 	endif
 	echo 'Error: First argument must be highlight number 1..99'
@@ -357,7 +317,7 @@ command! -nargs=* -range Highlight call s:Highlight('<args>')
 
 
 " Enable or disable mappings and any current matches.
-function! s:MatchToggle()
+function! s:ToggleMultiHL()
 	if exists('g:match_maps') && g:match_maps
 		let g:match_maps = 0
 		call s:DisableMultiHL()
@@ -368,23 +328,21 @@ function! s:MatchToggle()
 	call s:StoreClsLoadHighlight(g:match_maps)
 	echo 'Mappings for matching:' g:match_maps ? 'ON' : 'off'
 endfunction
-nnoremap <silent> <Leader>m :call <SID>MatchToggle()<CR>
+nnoremap <silent> <Leader>m :call <SID>ToggleMultiHL()<CR>
 
 " Disable
 function! s:DisableMultiHL()
 	for i in range(0, 9)
-		"execute 'unmap <k'.i.'>'
 		execute 'unmap \'.i.''
 	endfor
-	"nunmap <kMinus>
-	"nunmap <kPlus>
-	"nunmap <kMultiply>
-	"nunmap <Leader>f
-	"nunmap <Leader>F
-	"nunmap <Leader>n
-	"nunmap <Leader>N
-	nunmap \-
+	 
 	nunmap \=
+	vunmap \=
+	nunmap &
+	vunmap &
+	nunmap \-
+	vunmap \-
+	
 	nunmap \\
 	nunmap \f
 	nunmap \F
@@ -394,73 +352,53 @@ endfunction
 
 " Enable 
 function! s:EnableMultiHL()
-	for i in range(1, 9)
-		execute 'vnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 1, v:count)<CR>'
-		execute 'nnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 2, v:count)<CR>'
+	for i in range(0, 9)
+		"execute 'vnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 1, v:count)<CR>'
+		"execute 'nnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 2, v:count)<CR>'
+		execute 'vnoremap <silent> \'.i.' :call <SID>DoHighlight('.i.', 1)<CR>'
+		execute 'nnoremap <silent> \'.i.' :call <SID>DoHighlight('.i.', 2)<CR>'
 	endfor
-
-	vnoremap <silent> \0  :call <SID>ClsEachHighlight(1)<CR>
-	nnoremap <silent> \0  :call <SID>ClsEachHighlight(2)<CR>
-	nnoremap <silent> \-  :call <SID>StoreClsLoadHighlight(0)<CR>
-	nnoremap <silent> \=  :call <SID>StoreClsLoadHighlight(1)<CR>
+	
+	vnoremap <silent> \=  :call <SID>DoHighlightCircular(1)<CR>
+	nnoremap <silent> \=  :call <SID>DoHighlightCircular(2)<CR>
+	vnoremap <silent> &   :call <SID>DoHighlightCircular(1)<CR>
+	nnoremap <silent> &   :call <SID>DoHighlightCircular(2)<CR>
+	vnoremap <silent> \-  :call <SID>ClearOneHighlight(1)<CR>
+	nnoremap <silent> \-  :call <SID>ClearOneHighlight(2)<CR>
+	nnoremap <silent> \\  :call <SID>ClearAllHighlight()<CR>
 	nnoremap <silent> \f  :call <SID>Search(0)<CR>
 	nnoremap <silent> \F  :call <SID>Search(1)<CR>
 	nnoremap <silent> \n  :let @/=<SID>Search(0)<CR>
 	nnoremap <silent> \N  :let @/=<SID>Search(1)<CR>
-	vnoremap <silent> \=  :call <SID>DoHighlightCircular(1)<CR>
-	nnoremap <silent> \=  :call <SID>DoHighlightCircular(2)<CR>
+	nnoremap <silent> \s  :call <SID>Hsave('')<CR>
+	nnoremap <silent> \r  :call <SID>Hrestore('')<CR>
 endfunction
 
 function! s:DoHighlightCircular(pat)
-	if(s:circular_hlnum==0 ||s:circular_hlnum==10 || s:circular_hlnum==20)
-		let s:circular_hlnum += 1
-	endif
-	"circular_hlnum = {1..9, 11..19, 21..29}
-	if(0< s:circular_hlnum && s:circular_hlnum <= 9)
-		let l:decade = 0
-		let l:hlnum = s:circular_hlnum
-	else
-		if(10< s:circular_hlnum && s:circular_hlnum <= 19)
-			let l:decade = 1
-			let l:hlnum = s:circular_hlnum -10
-		else
-			if(20< s:circular_hlnum && s:circular_hlnum <= 29)
-				let l:decade = 2
-				let l:hlnum = s:circular_hlnum -20
-			endif
-		endif
-	endif
-	if(s:circular_hlnum==29)
+	call s:DoHighlight(s:circular_hlnum, a:pat)
+	
+	if(s:circular_hlnum==26)
 		let s:circular_hlnum = 0
 	else
 		let s:circular_hlnum += 1
 	endif
 	
-	"l:decade = {0,1,2}
-	"l:hlnum  = {1...9}
-	call s:DoHighlight(l:hlnum, a:pat, l:decade)
 endfunction
 
-function! s:GetHighlight()
+
+function! s:ApplyHighlight()
 	if s:hl_all_windows_tabs
-		call LoadHighlights()
-		if exists('g:last_matches')
+		if exists('g:cur_matches')
 			let l:wid = win_getid()
-			windo call setmatches(g:last_matches)
+			windo call setmatches(g:cur_matches)
 			call win_gotoid(l:wid)
 		endif
 	endif
 endfunction
 
-"update matches to global variable, to load when another tab open
-function! s:UpdateHighlight()
-	if s:hl_all_windows_tabs
-		let g:last_matches = getmatches()
-	endif
-endfunction
 
 "do not use 'BufEnter' event
 "'BufEnter' event was occurred recursely by :windo command
-autocmd! TabEnter,WinNew * call <SID>GetHighlight()
+autocmd! TabEnter,WinNew * call <SID>ApplyHighlight()
 
 call <SID>EnableMultiHL()
