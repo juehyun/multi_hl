@@ -6,7 +6,7 @@
 
 	![multi_hl](screenshot.png)
 
-## Installation (using plugin manager, vim-plug)
+## Installation (using 'vim-plug' plugin manager, recommended)
 
  - Install vim-plug
 
@@ -38,14 +38,14 @@
 	:PlugInstall
 	```
 
- - From time to time ... catch the changes :)
+ - From time to time ... update changes :)
 	```
 	:PlugUpdate
 	```
 
 refer https://github.com/junegunn/vim-plug for more details about vim-plug
 
-## Installation (manunally download and copy)
+## Installation (manunally download and copy, not recommended)
 
  - Download and copy files to .vim/plugin folder
 
@@ -57,40 +57,34 @@ refer https://github.com/junegunn/vim-plug for more details about vim-plug
 
 ## Usage
 
- - Refer the original URL(https://vim.fandom.com/wiki/Highlight_multiple_words) for the details. but I believe the descriptions about hot-keys (see below) will be enough.
-
- - The changes from original are
-
-   - Change hot-keys : use '\\\<key\>' instead of numeric keypad, because that most laptops are not easy to use numeric keypad :<
-
-   - Add circular highlight key for using 27 colors circularly ( '\\\\' )
+ - Try following hot-keys in gvim
 
 ## Hot-Keys
 
- - Change hotkeys to avoid using keypad (instead use '\' key) because my laptop doesn't have keypad  :<
-
-   | original hot-key | changed hot-key    | description                                                                                                          |
-   | ---------------- | ------------------ | ----------------------------------                                                                                   |
-   | Keypad 0         | \0                 | search pattern (word under cursor or visual selected region) and CLEAR the highlight. (i.e. clear current highlight) |
-   | Keypad 1         | \1                 | search pattern (word under cursor or visual selected region) and SET highlight using 'hl1' color (see highlight.csv) |
-   | Keypad 2         | \2                 | same as above, use 'hl2' color                                                                                       |
-   | Keypad 3         | \3                 | ...                                                                                                                  |
-   | Keypad 4         | \4                 | ...                                                                                                                  |
-   | Keypad 5         | \5                 | ...                                                                                                                  |
-   | Keypad 6         | \6                 | ...                                                                                                                  |
-   | Keypad 7         | \7                 | ...                                                                                                                  |
-   | Keypad 8         | \8                 | ...                                                                                                                  |
-   | Keypad 9         | \9                 | ...                                                                                                                  |
-   | Keypad +         | \\=                | restore previous cleared(saved) highlights                                                                           |
-   | Keypad -         | \\-                | clear all highlights (also save current highlights)                                                                  |
-   | Keypad *         | \\\                | highlight pattern using 27 colors circularly                                                                         |
-   | \m               | \m                 | toggle enable/disable script (initially enabled)                                                                     |
+   | hot-key    | description                                                                                                              |
+   | ---------- | ----------------------------------                                                                                       |
+   | \0         | search pattern (the word under cursor or visual selected region) and SET highlight using 'hl0' color (see highlighs.csv) |
+   | \1         | search pattern (the word under cursor or visual selected region) and SET highlight using 'hl1' color (see highlight.csv) |
+   | \2         | same as above, use 'hl2' color                                                                                           |
+   | \3         | ...                                                                                                                      |
+   | \4         | ...                                                                                                                      |
+   | \5         | ...                                                                                                                      |
+   | \6         | ...                                                                                                                      |
+   | \7         | ...                                                                                                                      |
+   | \8         | ...                                                                                                                      |
+   | \9         | ...                                                                                                                      |
+   | \-         | search pattern (the word under cursor or visual selected region) and CLEAR the highlight.                                |
+   | \=         | search pattern (the word under cursor or visual selected region) and SET highlight using 'hl1 ~ hl26' color circularly   |
+   | \s         | save current highlights                                                                                                  |
+   | \r         | restore previous saved highlights                                                                                        |
+   | \\\        | clear all highlights (also save current highlights)                                                                      |
+   | \m         | toggle enable/disable script (initially enabled)                                                                         |
 
 
 ## Colors
 
  - Check screenshot for color example
 
-   - or type the gvim command ':Hsample<CR>'
+ - or type the gvim command ':Hsample<CR>'
 
- - See 'plugin/highlights.csv' file to change color configuration
+ - See 'plugin/highlights.csv' file to customize colors
