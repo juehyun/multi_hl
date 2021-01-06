@@ -124,17 +124,14 @@ function! s:DoHighlight(hlnum, pat, decade)
 		let pattern = a:pat
 	endif
 	let id = hltotal + 100
-	
 	if s:hl_all_windows_tabs
 		let l:wid = win_getid()
 		"silent! :tabdo windo call matchdelete(id)
 		silent! windo call matchdelete(id)
 		call win_gotoid(l:wid)
-		echo "call matchdelete(id)"
 	else
 		silent! call matchdelete(id)
 	endif
-	
 	if !empty(pattern)
 		try
 			if s:hl_all_windows_tabs
@@ -142,7 +139,6 @@ function! s:DoHighlight(hlnum, pat, decade)
 				":tabdo windo call matchadd('hl'.hltotal, pattern, -1, id)
 				windo call matchadd('hl'.hltotal, pattern, -1, id)
 				call win_gotoid(l:wid)
-				echo "call matchadd(...)"
 			else 
 				call matchadd('hl'.hltotal, pattern, -1, id)
 			endif
@@ -150,13 +146,7 @@ function! s:DoHighlight(hlnum, pat, decade)
 			echo 'Highlight hl'.hltotal.' is not defined'
 		endtry
 	endif
-
-	"update matches to global variable, to load when another tab open
-	if s:hl_all_windows_tabs
-		let g:last_matches = getmatches()
-		echo "update g:last_matches"
-	endif
-
+	call s:UpdateHighlight()
 endfunction
 
 
@@ -179,6 +169,7 @@ function! s:ClsEachHighlight(pat)
 			endif
 		endif
 	endfor
+	call s:UpdateHighlight()
 endfunction
 
 " Return pattern to search for next match, and do search.
@@ -243,6 +234,7 @@ function! s:StoreClsLoadHighlight(action)
 			"let s:circular_hlnum = 0
 		endif
 	endif
+	call s:UpdateHighlight()
 endfunction
 
 
@@ -415,10 +407,8 @@ function! s:EnableMultiHL()
 	nnoremap <silent> \F  :call <SID>Search(1)<CR>
 	nnoremap <silent> \n  :let @/=<SID>Search(0)<CR>
 	nnoremap <silent> \N  :let @/=<SID>Search(1)<CR>
-	vnoremap <silent> \\  :call <SID>DoHighlightCircular(1)<CR>
-	nnoremap <silent> \\  :call <SID>DoHighlightCircular(2)<CR>
-	vnoremap <silent> &   :call <SID>DoHighlightCircular(1)<CR>
-	nnoremap <silent> &   :call <SID>DoHighlightCircular(2)<CR>
+	vnoremap <silent> \=  :call <SID>DoHighlightCircular(1)<CR>
+	nnoremap <silent> \=  :call <SID>DoHighlightCircular(2)<CR>
 endfunction
 
 function! s:DoHighlightCircular(pat)
@@ -451,7 +441,7 @@ function! s:DoHighlightCircular(pat)
 	call s:DoHighlight(l:hlnum, a:pat, l:decade)
 endfunction
 
-function! s:UpdateHighlight()
+function! s:GetHighlight()
 	if s:hl_all_windows_tabs
 		call LoadHighlights()
 		if exists('g:last_matches')
@@ -460,11 +450,17 @@ function! s:UpdateHighlight()
 			call win_gotoid(l:wid)
 		endif
 	endif
-	echo "UpdateHighlight()"
+endfunction
+
+"update matches to global variable, to load when another tab open
+function! s:UpdateHighlight()
+	if s:hl_all_windows_tabs
+		let g:last_matches = getmatches()
+	endif
 endfunction
 
 "do not use 'BufEnter' event
 "'BufEnter' event was occurred recursely by :windo command
-autocmd! TabEnter,WinNew * call <SID>UpdateHighlight()
+autocmd! TabEnter,WinNew * call <SID>GetHighlight()
 
 call <SID>EnableMultiHL()
