@@ -73,8 +73,8 @@ refer https://github.com/junegunn/vim-plug for more details about vim-plug
    | \7         | ...                                                                                                                      |
    | \8         | ...                                                                                                                      |
    | \9         | ...                                                                                                                      |
-   | \-         | search pattern (the word under cursor or visual selected region) and CLEAR the highlight.                                |
-   | \=         | search pattern (the word under cursor or visual selected region) and SET highlight using 'hl1 ~ hl26' color circularly   |
+   | \\-         | search pattern (the word under cursor or visual selected region) and CLEAR the highlight.                                |
+   | \\=         | search pattern (the word under cursor or visual selected region) and SET highlight using 'hl1 ~ hl26' color circularly   |
    | \s         | save current highlights                                                                                                  |
    | \r         | restore previous saved highlights                                                                                        |
    | \\\        | clear all highlights (also save current highlights)                                                                      |
