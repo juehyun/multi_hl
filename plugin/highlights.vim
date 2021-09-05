@@ -1,29 +1,3 @@
-"*********************************************************************
-" COPYRIGHT (C) 2017 Joohyun Lee (juehyun@etri.re.kr)
-" 
-" MIT License
-" 
-" Permission is hereby granted, free of charge, to any person obtaining
-" a copy of this software and associated documentation files (the
-" "Software"), to deal in the Software without restriction, including
-" without limitation the rights to use, copy, modify, merge, publish,
-" distribute, sublicense, and/or sell copies of the Software, and to
-" permit persons to whom the Software is furnished to do so, subject to
-" the following conditions:
-" 
-" The above copyright notice and this permission notice shall be
-" included in all copies or substantial portions of the Software.
-" 
-" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-" EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-" NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-" LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-" OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-" WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-"*********************************************************************
-
-
 " Plugin to highlight multiple words in different colors.
 " Version 2008-11-19 from http://vim.wikia.com/wiki/VimTip1572
 " File highlights.csv (in same directory as script) defines the highlights.
@@ -328,7 +302,6 @@ function! s:ToggleMultiHL()
 	call s:StoreClsLoadHighlight(g:match_maps)
 	echo 'Mappings for matching:' g:match_maps ? 'ON' : 'off'
 endfunction
-nnoremap <silent> <Leader>m :call <SID>ToggleMultiHL()<CR>
 
 " Disable
 function! s:DisableMultiHL()
@@ -336,18 +309,21 @@ function! s:DisableMultiHL()
 		execute 'unmap \'.i.''
 	endfor
 	 
-	nunmap \=
-	vunmap \=
+	nunmap <Leader>hl
+	nunmap <Leader>h=
+	vunmap <Leader>h=
 	nunmap &
 	vunmap &
-	nunmap \-
-	vunmap \-
-	
-	nunmap \\
-	nunmap \f
-	nunmap \F
-	nunmap \n
-	nunmap \N
+	nunmap <Leader>h-
+	vunmap <Leader>h-
+	nunmap <Leader>hc
+	nunmap <Leader>hf
+	nunmap <Leader>hF
+	nunmap <Leader>hn
+	nunmap <Leader>hN
+	nunmap <Leader>hs
+	nunmap <Leader>hr
+
 endfunction
 
 " Enable 
@@ -355,23 +331,24 @@ function! s:EnableMultiHL()
 	for i in range(0, 9)
 		"execute 'vnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 1, v:count)<CR>'
 		"execute 'nnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 2, v:count)<CR>'
-		execute 'vnoremap <silent> \'.i.' :call <SID>DoHighlight('.i.', 1)<CR>'
-		execute 'nnoremap <silent> \'.i.' :call <SID>DoHighlight('.i.', 2)<CR>'
+		execute 'vnoremap <silent> \h'.i.' :call <SID>DoHighlight('.i.', 1)<CR>'
+		execute 'nnoremap <silent> \h'.i.' :call <SID>DoHighlight('.i.', 2)<CR>'
 	endfor
 	
-	vnoremap <silent> \=  :call <SID>DoHighlightCircular(1)<CR>
-	nnoremap <silent> \=  :call <SID>DoHighlightCircular(2)<CR>
-	vnoremap <silent> &   :call <SID>DoHighlightCircular(1)<CR>
-	nnoremap <silent> &   :call <SID>DoHighlightCircular(2)<CR>
-	vnoremap <silent> \-  :call <SID>ClearOneHighlight(1)<CR>
-	nnoremap <silent> \-  :call <SID>ClearOneHighlight(2)<CR>
-	nnoremap <silent> \\  :call <SID>ClearAllHighlight()<CR>
-	nnoremap <silent> \f  :call <SID>Search(0)<CR>
-	nnoremap <silent> \F  :call <SID>Search(1)<CR>
-	nnoremap <silent> \n  :let @/=<SID>Search(0)<CR>
-	nnoremap <silent> \N  :let @/=<SID>Search(1)<CR>
-	nnoremap <silent> \s  :call <SID>Hsave('')<CR>
-	nnoremap <silent> \r  :call <SID>Hrestore('')<CR>
+	nnoremap <silent> <Leader>hl  :call <SID>ToggleMultiHL()<CR>
+	vnoremap <silent> <Leader>h=  :call <SID>DoHighlightCircular(1)<CR>
+	nnoremap <silent> <Leader>h=  :call <SID>DoHighlightCircular(2)<CR>
+	vnoremap <silent> &           :call <SID>DoHighlightCircular(1)<CR>
+	nnoremap <silent> &           :call <SID>DoHighlightCircular(2)<CR>
+	vnoremap <silent> <Leader>h-  :call <SID>ClearOneHighlight(1)<CR>
+	nnoremap <silent> <Leader>h-  :call <SID>ClearOneHighlight(2)<CR>
+	nnoremap <silent> <Leader>hc  :call <SID>ClearAllHighlight()<CR>
+	nnoremap <silent> <Leader>hf  :call <SID>Search(0)<CR>
+	nnoremap <silent> <Leader>hF  :call <SID>Search(1)<CR>
+	nnoremap <silent> <Leader>hn  :let @/=<SID>Search(0)<CR>
+	nnoremap <silent> <Leader>hN  :let @/=<SID>Search(1)<CR>
+	nnoremap <silent> <Leader>hs  :call <SID>Hsave('')<CR>
+	nnoremap <silent> <Leader>hr  :call <SID>Hrestore('')<CR>
 endfunction
 
 function! s:DoHighlightCircular(pat)
