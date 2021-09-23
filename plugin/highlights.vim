@@ -309,36 +309,40 @@ function! s:DisableMultiHL()
 		execute 'unmap \'.i.''
 	endfor
 	 
-	nunmap <Leader>mh
-	nunmap &
-	vunmap &
-	nunmap <Leader>&
-	vunmap <Leader>&
+	nunmap <Leader>hl
+	nunmap <Leader>=
+	vunmap <Leader>=
 	nunmap <Leader>-
+	vunmap <Leader>-
+	nunmap <Leader>hc
+	nunmap <Leader>hf
+	vunmap <Leader>hF
+	nunmap <Leader>hn
+	vunmap <Leader>hN
+	nunmap <Leader>hs
+	vunmap <Leader>hr
 
 endfunction
 
 " Enable 
 function! s:EnableMultiHL()
 	for i in range(0, 9)
-		execute 'vnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 1, v:count)<CR>'
-		execute 'nnoremap <silent> \'.i.' :<C-U>call <SID>DoHighlight('.i.', 2, v:count)<CR>'
+		execute 'vnoremap <silent> \'.i.' :call <SID>DoHighlight('.i.', 1)<CR>'
+		execute 'nnoremap <silent> \'.i.' :call <SID>DoHighlight('.i.', 2)<CR>'
 	endfor
 	
-	nnoremap <silent> <Leader>mh  :call <SID>ToggleMultiHL()<CR>
-	"vnoremap <silent> <Leader>=  :call <SID>DoHighlightCircular(1)<CR>
-	"nnoremap <silent> <Leader>=  :call <SID>DoHighlightCircular(2)<CR>
-	vnoremap <silent> &           :call <SID>DoHighlightCircular(1)<CR>
-	nnoremap <silent> &           :call <SID>DoHighlightCircular(2)<CR>
-	vnoremap <silent> <Leader>&   :call <SID>ClearOneHighlight(1)<CR>
-	nnoremap <silent> <Leader>&   :call <SID>ClearOneHighlight(2)<CR>
-	nnoremap <silent> <Leader>-   :call <SID>ClearAllHighlight()<CR>
-	"nnoremap <silent> <Leader>f   :call <SID>Search(0)<CR>
-	"nnoremap <silent> <Leader>F   :call <SID>Search(1)<CR>
-	"nnoremap <silent> <Leader>n   :let @/=<SID>Search(0)<CR>
-	"nnoremap <silent> <Leader>N   :let @/=<SID>Search(1)<CR>
-	"nnoremap <silent> <Leader>s   :call <SID>Hsave('')<CR>
-	"nnoremap <silent> <Leader>r   :call <SID>Hrestore('')<CR>
+	nnoremap <silent> <Leader>hl  :call <SID>ToggleMultiHL()<CR>
+	vnoremap <silent> <Leader>=   :call <SID>DoHighlightCircular(1)<CR>
+	nnoremap <silent> <Leader>=   :call <SID>DoHighlightCircular(2)<CR>
+	vnoremap <silent> <Leader>-   :call <SID>ClearOneHighlight(1)<CR>
+	nnoremap <silent> <Leader>-   :call <SID>ClearOneHighlight(2)<CR>
+	nnoremap <silent> <Leader><C-l>   :call <SID>ClearAllHighlight()<CR>
+	nnoremap <silent> <Leader>hf  :call <SID>Search(0)<CR>
+	nnoremap <silent> <Leader>hF  :call <SID>Search(1)<CR>
+	nnoremap <silent> <Leader>hn  :let @/=<SID>Search(0)<CR>
+	nnoremap <silent> <Leader>hN  :let @/=<SID>Search(1)<CR>
+	nnoremap <silent> <Leader>hs  :call <SID>Hsave('')<CR>
+	nnoremap <silent> <Leader>hr  :call <SID>Hrestore('')<CR>
 endfunction
 
 function! s:DoHighlightCircular(pat)
